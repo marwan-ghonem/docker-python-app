@@ -2,34 +2,28 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Tag for Docker image')
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag')
         choice(name: 'DEPLOY_ENV', choices: ['dev', 'test', 'prod'], description: 'Choose deploy environment')
-        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run test suite?')
+        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run test stage?')
     }
 
     environment {
-<<<<<<< HEAD
-        DOCKERHUB_CREDENTIALS = 'docker-creds' // MUST match the ID in Jenkins Credentials
-=======
-        DOCKERHUB_CREDENTIALS = 'docker' // Jenkins credential ID
->>>>>>> main
+        DOCKERHUB_CREDENTIALS = credentials('docker') // Jenkins Docker Hub creds ID
         IMAGE_NAME = "marwanghonem/python-app"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Login to Docker Hub') {
             steps {
-                git url: 'https://github.com/marwan-ghonem/docker-python-app.git'
+                sh '''
+                    echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-<<<<<<< HEAD
-                sh 'docker build -t $IMAGE_NAME:${IMAGE_TAG} .'
-=======
                 sh "docker build -t ${IMAGE_NAME}:${params.IMAGE_TAG} ."
->>>>>>> main
             }
         }
 
@@ -38,56 +32,24 @@ pipeline {
                 expression { return params.RUN_TESTS }
             }
             steps {
-<<<<<<< HEAD
-                sh 'echo "Running tests..."'
-                // Replace with actual test command if needed
-            }
-        }
-
-        stage('Debug Credentials') {
-            steps {
-                echo "Using credentials ID: ${env.DOCKERHUB_CREDENTIALS}"
-            }
-        }
-
-        stage('Push to DockerHub') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: env.DOCKERHUB_CREDENTIALS,
-                        usernameVariable: 'USER',
-                        passwordVariable: 'PASS'
-                    )
-                ]) {
-                    sh '''
-                        echo "$PASS" | docker login -u "$USER" --password-stdin
-                        docker push $IMAGE_NAME:${IMAGE_TAG}
-                    '''
-                }
-            }
-        }
-=======
-                echo 'Running tests...'
+                echo "🧪 Running tests for ${params.DEPLOY_ENV}..."
                 sh 'echo "Tests completed (placeholder)"'
             }
         }
 
-        stage('Push to DockerHub') {
+        stage('Push Docker Image') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: env.DOCKERHUB_CREDENTIALS,
-                        usernameVariable: 'USER',
-                        passwordVariable: 'PASS'
-                    )
-                ]) {
-                    sh """
-                        echo "$PASS" | docker login -u "$USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${params.IMAGE_TAG}
-                    """
-                }
+                sh "docker push ${IMAGE_NAME}:${params.IMAGE_TAG}"
             }
         }
->>>>>>> main
+    }
+
+    post {
+        success {
+            echo "✅ Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
+        }
     }
 }
