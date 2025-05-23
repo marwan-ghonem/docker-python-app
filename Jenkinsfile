@@ -8,8 +8,8 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'docker-creds'
-        IMAGE_NAME = 'marwanghonem/python-app'
+        DOCKERHUB_CREDENTIALS = 'docker-creds' // MUST match the ID in Jenkins Credentials
+        IMAGE_NAME = "marwanghonem/python-app"
     }
 
     stages {
@@ -21,7 +21,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${env.IMAGE_NAME}:${params.IMAGE_TAG} ."
+                sh 'docker build -t $IMAGE_NAME:${IMAGE_TAG} .'
             }
         }
 
@@ -31,16 +31,29 @@ pipeline {
             }
             steps {
                 sh 'echo "Running tests..."'
+                // Replace with actual test command if needed
+            }
+        }
+
+        stage('Debug Credentials') {
+            steps {
+                echo "Using credentials ID: ${env.DOCKERHUB_CREDENTIALS}"
             }
         }
 
         stage('Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: env.DOCKERHUB_CREDENTIALS,
+                        usernameVariable: 'USER',
+                        passwordVariable: 'PASS'
+                    )
+                ]) {
+                    sh '''
                         echo "$PASS" | docker login -u "$USER" --password-stdin
-                        docker push ${env.IMAGE_NAME}:${params.IMAGE_TAG}
-                    """
+                        docker push $IMAGE_NAME:${IMAGE_TAG}
+                    '''
                 }
             }
         }
