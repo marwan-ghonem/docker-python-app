@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'docker-creds' // Use string directly here
+        DOCKERHUB_CREDENTIALS = 'docker-creds'
         IMAGE_NAME = 'marwanghonem/python-app'
     }
 
@@ -31,13 +31,12 @@ pipeline {
             }
             steps {
                 sh 'echo "Running tests..."'
-                // Replace with actual test command
             }
         }
 
         stage('Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh """
                         echo "$PASS" | docker login -u "$USER" --password-stdin
                         docker push ${env.IMAGE_NAME}:${params.IMAGE_TAG}
