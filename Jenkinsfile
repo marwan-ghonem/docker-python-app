@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'docker' // Your new Jenkins Docker credential ID
+        DOCKERHUB_CREDENTIALS = 'docker' // Jenkins credential ID
         IMAGE_NAME = "marwanghonem/python-app"
     }
 
@@ -21,7 +21,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+                sh "docker build -t ${IMAGE_NAME}:${params.IMAGE_TAG} ."
             }
         }
 
@@ -31,7 +31,6 @@ pipeline {
             }
             steps {
                 echo 'Running tests...'
-                // Replace this with actual test command if needed
                 sh 'echo "Tests completed (placeholder)"'
             }
         }
@@ -45,10 +44,10 @@ pipeline {
                         passwordVariable: 'PASS'
                     )
                 ]) {
-                    sh '''
+                    sh """
                         echo "$PASS" | docker login -u "$USER" --password-stdin
-                        docker push $IMAGE_NAME:$IMAGE_TAG
-                    '''
+                        docker push ${IMAGE_NAME}:${params.IMAGE_TAG}
+                    """
                 }
             }
         }
